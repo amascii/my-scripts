@@ -1,13 +1,12 @@
-#!/bin/bash
 dir="."
 if [ $# -eq 1 ]; then
     dir="$1"
 fi
 
-for file in "$dir"/*.flac
+for file in "$dir"/*.mp3
 do
     echo "converting $file"
-    ffmpeg -loglevel warning -i "$file" -c:v copy -c:a libfdk_aac -vbr 4 "${file%.flac}".m4a
+    ffmpeg -loglevel warning -i "$file" -c:a libfdk_aac -vbr 4 "${file%.mp3}".m4a
 done
 
 
