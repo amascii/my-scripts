@@ -1,15 +1,12 @@
-import re
 import argparse
 import subprocess
 
 parser = argparse.ArgumentParser(description="Trim videos with ffmpeg")
 parser.add_argument("f_in", type=str, help="Input filename")
-parser.add_argument("cuts", type=str, nargs="+", help="Cut info")
+parser.add_argument("f_out", type=str, help="Output filename")
+parser.add_argument("start", type=str, help="Start time (HH:MM:SS)")
+parser.add_argument("end", type=str, nargs="?", help="End time (HH:MM:SS)")
 
-cut_parser = argparse.ArgumentParser()
-cut_parser.add_argument("f_out", type=str, help="Output filename")
-cut_parser.add_argument("start", type=str, help="Start time (HH:MM:SS)")
-cut_parser.add_argument("end", type=str, nargs="?", help="End time (HH:MM:SS)")
 
 def trim(f_in: str, f_out: str, start_ts: str, end_ts: str = "0") -> str:
     """
@@ -23,8 +20,11 @@ def trim(f_in: str, f_out: str, start_ts: str, end_ts: str = "0") -> str:
     f_out = f"{f_out}.{ext}"
     
     #  Build ffmpeg command
-    cmd = ["ffmpeg", "-hide_banner", "-log_level", "error", "-ss", f"{start}", "-i", f_in]
-    if end and end > start: cmd += ["-t", f"{end-start}"]
+    cmd = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-ss", f"{start}", "-i", f_in]
+
+    if end and end > start:
+        cmd += ["-t", f"{end-start}"]
+
     cmd += ["-c", "copy", f_out]
     
     subprocess.call(cmd)
@@ -32,21 +32,7 @@ def trim(f_in: str, f_out: str, start_ts: str, end_ts: str = "0") -> str:
     return f_out
 
 
-def str_to_secs(time: str) -> int:  
-    """
-    Converts time string of the form HH:MM:SS to seconds
-    """
-    pattern_text = r"^(((?P<h>\d+):)?(?P<m>\d+):)?(?P<s>\d+)$"
-    pattern = re.compile(pattern_text)
-    match = pattern.match(time)
-    if match:
-        h = 0 if match.group("h") is None else int(match.group("h"))
-        m = 0 if match.group("m") is None else int(match.group("m"))
-        s = 0 if match.group("s") is None else int(match.group("s"))
-        return h * 3600 + m * 60 + s
-    return 0
-
-def str_to_secs_2(s: str) -> int:
+def str_to_secs(s: str) -> int:
     """
     Converts time string of the form HH:MM:SS to seconds
     """
@@ -65,14 +51,6 @@ def str_to_secs_2(s: str) -> int:
 
 
 if __name__ == "__main__":
-
-    # Parse command line arguments into f_in and cuts
     args = parser.parse_args()
-
-    # Divide cut into groups of three
-    for i in range(len(args.cuts) // 3):
-        cut_args = cut_parser.parse_args(args.cuts[i * 3:i * 3 + 3])
-
-        # Call trim function
-        f_out = trim(args.f_in, cut_args.f_out, cut_args.start, cut_args.end)
-        print(f_out)
+    f_out = trim(args.f_in, args.f_out, args.start, args.end)
+    print(f_out)
